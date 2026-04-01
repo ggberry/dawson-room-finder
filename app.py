@@ -11,8 +11,7 @@ app = Flask(__name__)
 CACHE_FILE = 'timetable_cache.json'
 # Supported source HTML files (checked in order of preference)
 SOURCE_FILES = [
-    'Timetable and Registration Guide.html',
-    'dawson_master.html',
+    'timetable.html'
 ]
 
 # Only accept room codes in the Dawson format: -1H.4, 4P.04, 3D.23, 1G.18-1, etc.
@@ -164,7 +163,7 @@ def check_rooms():
     courses = load_courses()
 
     if courses is None:
-        return jsonify({'error': "No timetable HTML file found. Save the Dawson timetable page as 'Timetable and Registration Guide.html' in the app folder."}), 404
+        return jsonify({'error': "No timetable HTML file found. Save the Dawson timetable page as 'timetable.html' in the app folder."}), 404
 
     if len(courses) == 0:
         return jsonify({'error': 'No courses were parsed from the HTML.'}), 500
