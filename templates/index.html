@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Find empty classrooms at Dawson College in real-time.">
+    <title>Dawson Classroom Finder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                </div>
+                <div>
+                    <h1 id="app-title">Classroom Finder</h1>
+                    <p class="subtitle">Dawson College &mdash; Winter 2026</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Controls -->
+        <section class="controls-panel card" id="controls-panel">
+            <div class="controls-row">
+                <div class="control-group grow">
+                    <label for="datetime-input" class="input-label">Check at time</label>
+                    <input type="datetime-local" id="datetime-input" class="input-field">
+                    <span class="input-hint">Leave empty to use current time</span>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="btn-check" onclick="checkRooms()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        Find Rooms
+                    </button>
+                    <button class="btn btn-secondary" id="btn-now" onclick="checkNow()">
+                        Right Now
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading -->
+        <div class="loader-wrapper" id="loader" style="display:none;">
+            <div class="loader-spinner"></div>
+            <p class="loader-text">Scanning classrooms&hellip;</p>
+        </div>
+
+        <!-- Error -->
+        <div class="error-card" id="error-display" style="display:none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p id="error-text"></p>
+        </div>
+
+        <!-- Results -->
+        <section class="results-section" id="results" style="display:none;">
+            <!-- Summary -->
+            <div class="summary-bar card">
+                <div class="summary-time">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span id="summary-datetime"></span>
+                </div>
+                <div class="summary-stats">
+                    <div class="stat stat-empty">
+                        <span class="stat-number" id="stat-empty-count">0</span>
+                        <span class="stat-label">Available</span>
+                    </div>
+                    <div class="stat stat-occupied">
+                        <span class="stat-number" id="stat-occupied-count">0</span>
+                        <span class="stat-label">Occupied</span>
+                    </div>
+                    <div class="stat stat-total">
+                        <span class="stat-number" id="stat-total-count">0</span>
+                        <span class="stat-label">Total</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-bar card">
+                <span class="filter-label">Filter:</span>
+                <select class="filter-select" id="filter-floor" onchange="applyFilters()">
+                    <option value="">All Floors</option>
+                </select>
+                <select class="filter-select" id="filter-wing" onchange="applyFilters()">
+                    <option value="">All Wings</option>
+                </select>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs-container">
+                <button class="tab active" id="tab-empty" onclick="switchTab('empty')">
+                    <span class="tab-dot tab-dot-empty"></span>
+                    Available
+                    <span class="tab-badge" id="tab-empty-badge">0</span>
+                </button>
+                <button class="tab" id="tab-occupied" onclick="switchTab('occupied')">
+                    <span class="tab-dot tab-dot-occupied"></span>
+                    Occupied
+                    <span class="tab-badge" id="tab-occupied-badge">0</span>
+                </button>
+            </div>
+
+            <!-- Room Grids -->
+            <div class="rooms-grid" id="empty-rooms-grid"></div>
+            <div class="rooms-grid" id="occupied-rooms-grid" style="display:none;"></div>
+        </section>
+
+        <footer class="app-footer">
+            <p>Data from <a href="https://timetable.dawsoncollege.qc.ca/" target="_blank" rel="noopener">timetable.dawsoncollege.qc.ca</a></p>
+        </footer>
+    </div>
+
+    <script>
+        let lastResult = null;
+
+        // Parse floor and wing from a room name like "-1H.4" → floor: "-1", wing: "H"
+        function parseRoom(name) {
+            const m = name.match(/^(-?\d+)([A-Za-z]+)\./);
+            if (!m) return { floor: null, wing: null };
+            return { floor: m[1], wing: m[2].toUpperCase() };
+        }
+
+        function checkNow() {
+            document.getElementById('datetime-input').value = '';
+            checkRooms();
+        }
+
+        async function checkRooms() {
+            const dtInput = document.getElementById('datetime-input').value;
+            const loader = document.getElementById('loader');
+            const results = document.getElementById('results');
+            const errorDisplay = document.getElementById('error-display');
+            const btn = document.getElementById('btn-check');
+
+            errorDisplay.style.display = 'none';
+            results.style.display = 'none';
+            loader.style.display = 'flex';
+            btn.disabled = true;
+
+            try {
+                const body = {};
+                if (dtInput) body.datetime = dtInput;
+
+                const resp = await fetch('/api/check-rooms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Unknown error');
+
+                lastResult = data;
+                buildFilters(data);
+                renderResults(data);
+            } catch (err) {
+                document.getElementById('error-text').textContent = err.message;
+                errorDisplay.style.display = 'flex';
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        function buildFilters(data) {
+            const allRooms = [...data.empty.rooms, ...data.occupied.rooms];
+            const floors = new Set();
+            const wings = new Set();
+
+            allRooms.forEach(r => {
+                const { floor, wing } = parseRoom(r);
+                if (floor !== null) floors.add(floor);
+                if (wing !== null) wings.add(wing);
+            });
+
+            const sortedFloors = [...floors].sort((a, b) => parseInt(a) - parseInt(b));
+            const sortedWings = [...wings].sort();
+
+            const floorSel = document.getElementById('filter-floor');
+            const wingSel = document.getElementById('filter-wing');
+
+            floorSel.innerHTML = '<option value="">All Floors</option>' +
+                sortedFloors.map(f => `<option value="${f}">Floor ${f}</option>`).join('');
+
+            wingSel.innerHTML = '<option value="">All Wings</option>' +
+                sortedWings.map(w => `<option value="${w}">Wing ${w}</option>`).join('');
+        }
+
+        function applyFilters() {
+            if (!lastResult) return;
+            renderResults(lastResult);
+        }
+
+        function filterRooms(rooms) {
+            const floor = document.getElementById('filter-floor').value;
+            const wing = document.getElementById('filter-wing').value;
+
+            return rooms.filter(r => {
+                const parsed = parseRoom(r);
+                if (floor && parsed.floor !== floor) return false;
+                if (wing && parsed.wing !== wing) return false;
+                return true;
+            });
+        }
+
+        function renderResults(data) {
+            const results = document.getElementById('results');
+            const filteredEmpty = filterRooms(data.empty.rooms);
+            const filteredOccupied = filterRooms(data.occupied.rooms);
+
+            // Summary (unfiltered totals)
+            document.getElementById('summary-datetime').textContent = data.check_time;
+            document.getElementById('stat-empty-count').textContent = filteredEmpty.length;
+            document.getElementById('stat-occupied-count').textContent = filteredOccupied.length;
+            document.getElementById('stat-total-count').textContent = filteredEmpty.length + filteredOccupied.length;
+
+            // Tab badges
+            document.getElementById('tab-empty-badge').textContent = filteredEmpty.length;
+            document.getElementById('tab-occupied-badge').textContent = filteredOccupied.length;
+
+            // Empty rooms
+            const emptyGrid = document.getElementById('empty-rooms-grid');
+            if (filteredEmpty.length === 0) {
+                emptyGrid.innerHTML = '<div class="no-rooms">No available rooms match your filters.</div>';
+            } else {
+                emptyGrid.innerHTML = filteredEmpty.map((room, i) => `
+                    <div class="room-card room-empty" style="animation-delay: ${i * 0.01}s">
+                        <div class="room-status-dot"></div>
+                        <span class="room-name">${room}</span>
+                    </div>
+                `).join('');
+            }
+
+            // Occupied rooms
+            const occGrid = document.getElementById('occupied-rooms-grid');
+            if (filteredOccupied.length === 0) {
+                occGrid.innerHTML = '<div class="no-rooms">No occupied rooms match your filters.</div>';
+            } else {
+                occGrid.innerHTML = filteredOccupied.map((room, i) => {
+                    const details = data.occupied.details[room] || [];
+                    const detailHtml = details.map(d =>
+                        `<span class="room-detail">${d.start} – ${d.end}</span>`
+                    ).join('');
+                    return `
+                        <div class="room-card room-occupied" style="animation-delay: ${i * 0.01}s">
+                            <div class="room-status-dot"></div>
+                            <span class="room-name">${room}</span>
+                            <div class="room-details">${detailHtml}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            results.style.display = 'block';
+            switchTab(document.getElementById('tab-empty').classList.contains('active') ? 'empty' : 'occupied');
+        }
+
+        function switchTab(tab) {
+            const tabEmpty = document.getElementById('tab-empty');
+            const tabOccupied = document.getElementById('tab-occupied');
+            const gridEmpty = document.getElementById('empty-rooms-grid');
+            const gridOccupied = document.getElementById('occupied-rooms-grid');
+
+            if (tab === 'empty') {
+                tabEmpty.classList.add('active');
+                tabOccupied.classList.remove('active');
+                gridEmpty.style.display = 'grid';
+                gridOccupied.style.display = 'none';
+            } else {
+                tabOccupied.classList.add('active');
+                tabEmpty.classList.remove('active');
+                gridOccupied.style.display = 'grid';
+                gridEmpty.style.display = 'none';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => { checkRooms(); });
+    </script>
+</body>
+</html>
