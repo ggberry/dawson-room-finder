@@ -328,6 +328,89 @@
             return { floor: m[1], wing: m[2].toUpperCase() };
         }
 
+        /* ========================
+           Drag-to-select Filters
+           ======================== */
+        let isDraggingFilters = false;
+        let dragFilterAction = null; 
+
+        function initDragSelect() {
+            const containers = [
+                document.getElementById('filter-floor'), 
+                document.getElementById('filter-wing')
+            ];
+
+            // Prevent native drag styling
+            document.addEventListener('dragstart', e => {
+                if(e.target.closest('.filter-pill')) e.preventDefault();
+            });
+
+            containers.forEach(container => {
+                // Prevent native click to avoid double-toggling since we handle it in mousedown/touchstart
+                container.addEventListener('click', (e) => {
+                    if (e.target.closest('.filter-pill')) {
+                        e.preventDefault();
+                    }
+                });
+
+                // Mouse Events
+                container.addEventListener('mousedown', (e) => {
+                    const pill = e.target.closest('.filter-pill');
+                    if (!pill) return;
+                    e.preventDefault(); 
+                    const input = pill.querySelector('input');
+                    isDraggingFilters = true;
+                    dragFilterAction = !input.checked;
+                    input.checked = dragFilterAction;
+                    applyFilters();
+                });
+
+                container.addEventListener('mouseover', (e) => {
+                    if (!isDraggingFilters) return;
+                    const pill = e.target.closest('.filter-pill');
+                    if (!pill) return;
+                    const input = pill.querySelector('input');
+                    if (input.checked !== dragFilterAction) {
+                        input.checked = dragFilterAction;
+                        applyFilters();
+                    }
+                });
+
+                // Touch Events
+                container.addEventListener('touchstart', (e) => {
+                    const touch = e.touches[0];
+                    const pill = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.filter-pill');
+                    if (!pill) return;
+                    
+                    isDraggingFilters = true;
+                    const input = pill.querySelector('input');
+                    dragFilterAction = !input.checked;
+                    e.preventDefault(); // prevent scrolling and native click
+                    
+                    input.checked = dragFilterAction;
+                    applyFilters();
+                }, { passive: false });
+
+                container.addEventListener('touchmove', (e) => {
+                    if (!isDraggingFilters) return;
+                    e.preventDefault(); 
+                    const touch = e.touches[0];
+                    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const pill = element?.closest('.filter-pill');
+                    if (!pill) return;
+                    const input = pill.querySelector('input');
+                    if (input && input.checked !== dragFilterAction) {
+                        input.checked = dragFilterAction;
+                        applyFilters();
+                    }
+                }, { passive: false });
+            });
+
+            window.addEventListener('mouseup', () => { isDraggingFilters = false; });
+            window.addEventListener('touchend', () => { isDraggingFilters = false; });
+            window.addEventListener('touchcancel', () => { isDraggingFilters = false; });
+        }
+
         function checkNow() {
             if (fpInstance) {
                 fpInstance.clear();
@@ -554,6 +637,7 @@
                 minuteIncrement: 15
             });
 
+            initDragSelect();
             checkRooms();
         });
 

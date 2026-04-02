@@ -421,6 +421,9 @@ select.input-field {
 .filter-pill {
     cursor: pointer;
     display: inline-flex;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
 }
 
 .filter-pill input {
@@ -428,12 +431,12 @@ select.input-field {
 }
 
 .filter-pill span {
-    padding: 4px 12px;
-    border-radius: 16px;
+    padding: 6px 14px;
+    border-radius: 20px;
     border: 1px solid var(--border);
     background: var(--bg-card);
     color: var(--text-secondary);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
     transition: all 0.2s ease;
 }
@@ -653,6 +656,12 @@ select.input-field {
 
     .theme-selector {
         align-items: flex-start;
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    .theme-selector .filter-select {
+        width: 100%;
     }
 
     .controls-row {
@@ -668,6 +677,8 @@ select.input-field {
 
     .btn {
         justify-content: center;
+        padding: 12px 18px; /* Larger tap target */
+        font-size: 0.9rem;
     }
 
     .summary-bar {
@@ -678,19 +689,24 @@ select.input-field {
     .filter-bar {
         flex-direction: column;
         align-items: flex-start;
+        gap: 16px;
+    }
+
+    .filter-select {
+        width: 100%; /* Better width on mobile */
     }
 
     .rooms-grid {
-        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-        gap: 6px;
+        grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+        gap: 8px;
     }
 
     .room-card {
-        padding: 10px 6px;
+        padding: 14px 8px;
     }
 
     .room-name {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 }
 
