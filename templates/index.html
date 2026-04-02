@@ -106,6 +106,25 @@
                     <span class="filter-label" style="min-width: 50px;">Wings:</span>
                     <div id="filter-wing" class="filter-checkboxes"></div>
                 </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%; align-items: center;" id="filter-duration-container">
+                    <span class="filter-label" style="min-width: 50px;">Min. Available:</span>
+                    <select class="filter-select" id="filter-duration" onchange="applyFilters()">
+                        <option value="0">Any Time</option>
+                        <option value="10">&gt; 10 mins</option>
+                        <option value="30">&gt; 30 mins</option>
+                        <option value="60">&gt; 1 hour</option>
+                        <option value="90">&gt; 1.5 hours</option>
+                        <option value="120">&gt; 2 hours</option>
+                        <option value="180">&gt; 3 hours</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%; align-items: center;" id="filter-sort-container">
+                    <span class="filter-label" style="min-width: 50px;">Sort By:</span>
+                    <select class="filter-select" id="filter-sort" onchange="applyFilters()">
+                        <option value="alpha">Alphabetical</option>
+                        <option value="time">Most Time Available</option>
+                    </select>
+                </div>
             </div>
 
             <!-- Tabs -->
@@ -126,6 +145,20 @@
             <div class="rooms-grid" id="empty-rooms-grid"></div>
             <div class="rooms-grid" id="occupied-rooms-grid" style="display:none;"></div>
         </section>
+
+        <!-- Schedule Modal -->
+        <div class="modal-backdrop" id="schedule-modal" style="display:none;" onclick="closeScheduleModal(event)">
+            <div class="modal-content card" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h2 id="modal-room-name">Room</h2>
+                    <button class="modal-close" onclick="closeScheduleModal(null)">&times;</button>
+                </div>
+                <div id="modal-loader" class="loader-wrapper" style="padding: 20px 0;">
+                    <div class="loader-spinner"></div>
+                </div>
+                <div id="modal-schedule-content" style="display:none; margin-top: 10px;"></div>
+            </div>
+        </div>
 
         <footer class="app-footer">
             <p>Data from <a href="https://timetable.dawsoncollege.qc.ca/" target="_blank" rel="noopener">timetable.dawsoncollege.qc.ca</a></p>
@@ -349,7 +382,7 @@
         }
 
         function buildFilters(data) {
-            const allRooms = [...data.empty.rooms, ...data.occupied.rooms];
+            const allRooms = [...data.empty.rooms.map(r => r.name), ...data.occupied.rooms];
             const floors = new Set();
             const wings = new Set();
 
@@ -388,25 +421,44 @@
             renderResults(lastResult);
         }
 
-        function filterRooms(rooms) {
+        function filterRooms(rooms, isEmpty) {
             const floorSel = document.getElementById('filter-floor');
             const wingSel = document.getElementById('filter-wing');
+            const durationSel = document.getElementById('filter-duration');
             
             const selectedFloors = Array.from(floorSel.querySelectorAll('input:checked')).map(el => el.value);
             const selectedWings = Array.from(wingSel.querySelectorAll('input:checked')).map(el => el.value);
+            const minDuration = durationSel ? parseInt(durationSel.value) || 0 : 0;
 
             return rooms.filter(r => {
-                const parsed = parseRoom(r);
+                const roomName = isEmpty ? r.name : r;
+                const parsed = parseRoom(roomName);
                 if (selectedFloors.length > 0 && !selectedFloors.includes(parsed.floor)) return false;
                 if (selectedWings.length > 0 && !selectedWings.includes(parsed.wing)) return false;
+                
+                if (isEmpty && minDuration > 0) {
+                    if (r.minutes_left !== null && r.minutes_left < minDuration) return false;
+                }
                 return true;
             });
         }
 
         function renderResults(data) {
             const results = document.getElementById('results');
-            const filteredEmpty = filterRooms(data.empty.rooms);
-            const filteredOccupied = filterRooms(data.occupied.rooms);
+            let filteredEmpty = filterRooms(data.empty.rooms, true);
+            let filteredOccupied = filterRooms(data.occupied.rooms, false);
+
+            const sortMode = document.getElementById('filter-sort') ? document.getElementById('filter-sort').value : 'alpha';
+            if (sortMode === 'time') {
+                filteredEmpty.sort((a, b) => {
+                    let aTime = a.minutes_left === null ? Infinity : a.minutes_left;
+                    let bTime = b.minutes_left === null ? Infinity : b.minutes_left;
+                    if (bTime === aTime) return a.name.localeCompare(b.name);
+                    return bTime - aTime;
+                });
+            } else {
+                filteredEmpty.sort((a, b) => a.name.localeCompare(b.name));
+            }
 
             // Summary (unfiltered totals)
             document.getElementById('summary-datetime').textContent = data.check_time;
@@ -423,12 +475,29 @@
             if (filteredEmpty.length === 0) {
                 emptyGrid.innerHTML = '<div class="no-rooms">No available rooms match your filters.</div>';
             } else {
-                emptyGrid.innerHTML = filteredEmpty.map((room, i) => `
-                    <div class="room-card room-empty" style="animation-delay: ${i * 0.01}s">
+                emptyGrid.innerHTML = filteredEmpty.map((room, i) => {
+                    let formattedDuration = "";
+                    if (room.minutes_left !== null) {
+                        const h = Math.floor(room.minutes_left / 60);
+                        const m = room.minutes_left % 60;
+                        if (h > 0 && m > 0) formattedDuration = `${h}h ${m} min`;
+                        else if (h > 0) formattedDuration = `${h}h`;
+                        else formattedDuration = `${m} min`;
+                    }
+
+                    let durationText = room.minutes_left === null 
+                        ? 'Available<br>Rest of Day' 
+                        : `For ${formattedDuration}<br><span style="font-size: 0.9em; opacity: 0.9;">(til ${room.available_until})</span>`;
+                        
+                    return `
+                    <div class="room-card room-empty click-anim" style="animation-delay: ${i * 0.01}s" onclick="openScheduleModal('${room.name}')">
                         <div class="room-status-dot"></div>
-                        <span class="room-name">${room}</span>
+                        <span class="room-name">${room.name}</span>
+                        <div class="room-details" style="text-align: center; align-items: center;">
+                            <span class="room-detail" style="font-weight: 600; color: var(--green-600); line-height: 1.3;">${durationText}</span>
+                        </div>
                     </div>
-                `).join('');
+                `}).join('');
             }
 
             // Occupied rooms
@@ -436,15 +505,15 @@
             if (filteredOccupied.length === 0) {
                 occGrid.innerHTML = '<div class="no-rooms">No occupied rooms match your filters.</div>';
             } else {
-                occGrid.innerHTML = filteredOccupied.map((room, i) => {
-                    const details = data.occupied.details[room] || [];
+                occGrid.innerHTML = filteredOccupied.map((roomName, i) => {
+                    const details = data.occupied.details[roomName] || [];
                     const detailHtml = details.map(d =>
                         `<span class="room-detail">${d.start} – ${d.end}</span>`
                     ).join('');
                     return `
-                        <div class="room-card room-occupied" style="animation-delay: ${i * 0.01}s">
+                        <div class="room-card room-occupied click-anim" style="animation-delay: ${i * 0.01}s" onclick="openScheduleModal('${roomName}')">
                             <div class="room-status-dot"></div>
-                            <span class="room-name">${room}</span>
+                            <span class="room-name">${roomName}</span>
                             <div class="room-details">${detailHtml}</div>
                         </div>
                     `;
@@ -487,6 +556,74 @@
 
             checkRooms();
         });
+
+        /* ========================
+           Schedule Modal Logic
+           ======================== */
+        async function openScheduleModal(roomName) {
+            const modal = document.getElementById('schedule-modal');
+            const title = document.getElementById('modal-room-name');
+            const loader = document.getElementById('modal-loader');
+            const content = document.getElementById('modal-schedule-content');
+            
+            title.textContent = "Room " + roomName;
+            content.style.display = 'none';
+            loader.style.display = 'flex';
+            modal.style.display = 'flex';
+            
+            // Setup simple fade in effect on background via opacity if desired, currently it's just display=flex
+            
+            try {
+                const resp = await fetch(`/api/room/${encodeURIComponent(roomName)}`);
+                const data = await resp.json();
+                
+                if (!resp.ok) throw new Error(data.error || 'Failed to fetch schedule');
+                
+                const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                let html = '<div class="weekly-schedule-grid">';
+                
+                let foundClasses = false;
+                days.forEach(day => {
+                    const classes = data.schedule[day];
+                    if (classes && classes.length > 0) {
+                        foundClasses = true;
+                        html += `
+                            <div class="schedule-day-block">
+                                <h3 class="schedule-day-title">${day.charAt(0).toUpperCase() + day.slice(1)}</h3>
+                                <div class="schedule-classes">
+                                    ${classes.map(c => `
+                                        <div class="class-time-badge">
+                                            <span>${c.start}</span>
+                                            <span style="opacity: 0.5; margin: 0 4px;">-</span>
+                                            <span>${c.end}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += '</div>';
+
+                if (!foundClasses) {
+                    html = '<p class="no-rooms">No classes scheduled for this room for the rest of the week.</p>';
+                }
+                
+                content.innerHTML = html;
+            } catch (err) {
+                content.innerHTML = `<p class="error-text" style="color:var(--red-600); padding: 10px;">${err.message}</p>`;
+            } finally {
+                loader.style.display = 'none';
+                content.style.display = 'block';
+            }
+        }
+        
+        function closeScheduleModal(e) {
+            if (e === null || e.target.id === 'schedule-modal') {
+                document.getElementById('schedule-modal').style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>

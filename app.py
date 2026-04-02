@@ -186,6 +186,45 @@ def check_rooms():
 
     empty_rooms = sorted(set(all_rooms) - occupied_rooms)
 
+    # Calculate time remaining for empty rooms
+    days_map = {
+        'monday': 0, 'tuesday': 1, 'wednesday': 2,
+        'thursday': 3, 'friday': 4, 'saturday': 5, 'sunday': 6
+    }
+    
+    empty_rooms_detailed = []
+    for r in empty_rooms:
+        # Find all classes for this room today
+        today_courses = []
+        for c in courses:
+            if c['room'] == r:
+                c_day = days_map.get(c['day'].strip().lower())
+                if c_day == check_dt.weekday():
+                    try:
+                        c_start = dateutil.parser.parse(c['start']).time()
+                        today_courses.append(c_start)
+                    except Exception:
+                        pass
+        
+        # Find the earliest class that starts AFTER the check_dt
+        future_courses = [t for t in today_courses if t > check_dt.time()]
+        
+        minutes_left = None
+        available_until = "End of Day"
+        
+        if future_courses:
+            next_class_time = min(future_courses)
+            # Calculate minutes diff
+            dt_next = datetime.combine(check_dt.date(), next_class_time)
+            minutes_left = int((dt_next - check_dt).total_seconds() / 60)
+            available_until = next_class_time.strftime('%I:%M %p')
+            
+        empty_rooms_detailed.append({
+            'name': r,
+            'available_until': available_until,
+            'minutes_left': minutes_left
+        })
+
     return jsonify({
         'check_time': check_dt.strftime('%A, %Y-%m-%d %H:%M'),
         'total_rooms': len(all_rooms),
@@ -195,9 +234,38 @@ def check_rooms():
             'details': occupied_details
         },
         'empty': {
-            'count': len(empty_rooms),
-            'rooms': empty_rooms
+            'count': len(empty_rooms_detailed),
+            'rooms': empty_rooms_detailed
         }
+    })
+
+@app.route('/api/room/<room_name>', methods=['GET'])
+def get_room_schedule(room_name):
+    courses = load_courses()
+    if courses is None:
+        return jsonify({'error': 'No data loaded'}), 404
+        
+    room_courses = [c for c in courses if c['room'].lower() == room_name.lower()]
+    if not room_courses:
+        return jsonify({'error': 'Room not found or has no scheduled classes'}), 404
+        
+    schedule = {
+        'monday': [], 'tuesday': [], 'wednesday': [],
+        'thursday': [], 'friday': [], 'saturday': [], 'sunday': []
+    }
+    
+    for c in room_courses:
+        day_key = c['day'].strip().lower()
+        if day_key in schedule:
+            schedule[day_key].append({'start': c['start'], 'end': c['end']})
+            
+    # Sort courses for each day chronologically
+    for day in schedule:
+        schedule[day].sort(key=lambda x: dateutil.parser.parse(x['start']).time())
+        
+    return jsonify({
+        'room': room_name.upper(),
+        'schedule': schedule
     })
 
 
