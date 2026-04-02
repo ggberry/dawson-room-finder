@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" id="flatpickr-theme" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 <body>
     <div class="app-container">
@@ -133,6 +134,7 @@
 
     <script>
         let lastResult = null;
+        let fpInstance = null;
 
         /* ========================
            Theme System
@@ -294,7 +296,11 @@
         }
 
         function checkNow() {
-            document.getElementById('datetime-input').value = '';
+            if (fpInstance) {
+                fpInstance.clear();
+            } else {
+                document.getElementById('datetime-input').value = '';
+            }
             checkRooms();
         }
 
@@ -464,7 +470,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             restoreTheme();
             
-            flatpickr("#datetime-input", {
+            fpInstance = flatpickr("#datetime-input", {
                 enableTime: true,
                 dateFormat: "Y-m-d\\TH:i",
                 altInput: true,
@@ -475,6 +481,5 @@
             checkRooms();
         });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
 </html>
