@@ -2,6 +2,7 @@ import json
 import os
 import re
 from datetime import datetime
+import time
 from flask import Flask, render_template, request, jsonify
 from bs4 import BeautifulSoup
 import dateutil.parser
@@ -142,6 +143,10 @@ def is_class_active(course, check_dt):
     return start_t <= current_time <= end_t
 
 
+# Live user tracking
+active_users = {}
+USER_TIMEOUT_SECONDS = 30
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -149,6 +154,25 @@ def index():
 @app.route("/ping")
 def ping():
     return "200 OK"
+
+@app.route('/api/ping', methods=['POST'])
+def api_ping():
+    data = request.get_json() or {}
+    client_id = data.get('client_id')
+    if not client_id:
+        return jsonify({'error': 'client_id required'}), 400
+        
+    current_time = time.time()
+    active_users[client_id] = current_time
+    
+    # Clean up timeout users
+    expired_keys = [k for k, v in active_users.items() if current_time - v > USER_TIMEOUT_SECONDS]
+    for k in expired_keys:
+        del active_users[k]
+        
+    return jsonify({
+        'active_users': len(active_users)
+    })
 
 
 @app.route('/api/check-rooms', methods=['POST'])
@@ -302,5 +326,5 @@ if __name__ == '__main__':
     print("  Dawson Classroom Finder")
     print("=" * 50)
 
-    # app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000)
     # gunicorn app:app --bind 0.0.0.0:$PORT

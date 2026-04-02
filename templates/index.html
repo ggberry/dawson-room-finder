@@ -38,6 +38,17 @@
             </div>
         </header>
 
+        <!-- Live & Support Bar -->
+        <div class="live-support-bar">
+            <div class="live-counter" id="live-counter" style="display: none;" title="Active users viewing this page">
+                <span class="live-dot"></span>
+                <span id="live-count">1</span> online
+            </div>
+            <a href="https://buymeacoffee.com/ggberry" target="_blank" rel="noopener" class="bmc-btn">
+                <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 34px !important;width: 122px !important;" >
+            </a>
+        </div>
+
         <!-- Controls -->
         <section class="controls-panel card" id="controls-panel">
             <div class="controls-row">
@@ -639,7 +650,50 @@
 
             initDragSelect();
             checkRooms();
+            initLiveCounter();
         });
+
+        /* ========================
+           Live User Counter
+           ======================== */
+        function generateUUID() {
+            if (crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        async function pingLiveUsers() {
+            let clientId = sessionStorage.getItem('cf_client_id');
+            if (!clientId) {
+                clientId = generateUUID();
+                sessionStorage.setItem('cf_client_id', clientId);
+            }
+
+            try {
+                const resp = await fetch('/api/ping', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: clientId })
+                });
+                
+                if (resp.ok) {
+                    const data = await resp.json();
+                    document.getElementById('live-count').textContent = data.active_users || 1;
+                    document.getElementById('live-counter').style.display = 'flex';
+                }
+            } catch (err) {
+                console.error('Ping failed:', err);
+            }
+        }
+
+        function initLiveCounter() {
+            pingLiveUsers(); // Initial ping
+            setInterval(pingLiveUsers, 15000); // Ping every 15 seconds
+        }
 
         /* ========================
            Schedule Modal Logic

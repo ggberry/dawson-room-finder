@@ -139,6 +139,57 @@ body {
 }
 
 /* ========================
+   Live Counter & BMC
+   ======================== */
+.live-counter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.35s ease;
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--green-600);
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+}
+
+.bmc-btn {
+    display: inline-block;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.bmc-btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+.live-support-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+/* ========================
    Controls
    ======================== */
 .controls-panel {
