@@ -230,5 +230,5 @@ if __name__ == '__main__':
     print("  Dawson Classroom Finder")
     print("=" * 50)
 
-    app.run(debug=True, port=5000)
+    # app.run(debug=True, port=5000)
     # gunicorn app:app --bind 0.0.0.0:$PORT
