@@ -318,7 +318,14 @@
 
             try {
                 const body = {};
-                if (dtInput) body.datetime = dtInput;
+                if (dtInput) {
+                    body.datetime = dtInput;
+                } else {
+                    const now = new Date();
+                    const offset = now.getTimezoneOffset() * 60000;
+                    const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16);
+                    body.datetime = localISOTime;
+                }
 
                 const resp = await fetch('/api/check-rooms', {
                     method: 'POST',
