@@ -715,22 +715,32 @@ select.input-field {
    ======================== */
 .flatpickr-calendar {
     font-family: var(--font) !important;
-    border-radius: var(--radius-lg) !important; /* Makes the overall box significantly rounder */
+    border-radius: var(--radius-lg) !important;
     box-shadow: var(--shadow-md) !important;
     overflow: hidden !important; 
-    border: none !important;
+    border: 1px solid var(--border) !important;
+    background: var(--bg-card) !important;
+    transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+    animation: calendarAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes calendarAppear {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .flatpickr-calendar.arrowTop:before, 
 .flatpickr-calendar.arrowTop:after,
 .flatpickr-calendar.arrowBottom:before, 
 .flatpickr-calendar.arrowBottom:after {
-    display: none !important; /* Hides the pointy tooltip arrows */
+    display: none !important;
 }
 
 .flatpickr-months {
-    padding-top: 14px !important;
-    padding-bottom: 6px !important;
+    padding: 20px 0 12px !important; /* Slightly more padding for better balance */
+    background: var(--bg-page) !important; /* Unified background for the entire header */
+    transition: background 0.35s ease;
+    border-bottom: 1px solid var(--border) !important;
 }
 
 .flatpickr-current-month {
@@ -738,27 +748,181 @@ select.input-field {
     font-size: 1.25rem !important;
     font-weight: 800 !important;
     padding-top: 0 !important;
+    color: var(--text-primary) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
 
-.flatpickr-current-month .flatpickr-monthDropdown-months {
+/* Month Dropdown "Box" */
+.flatpickr-monthDropdown-months {
     font-family: var(--font) !important;
     font-weight: 800 !important;
     border-radius: var(--radius-sm) !important;
-    padding: 2px 4px !important;
+    padding: 6px 10px !important;
     appearance: none !important;
     -webkit-appearance: none !important;
-    background: transparent !important;
+    background: var(--bg-card) !important; /* Stand out slightly from header */
+    color: var(--text-primary) !important;
     cursor: pointer !important;
     outline: none !important;
+    border: 1px solid var(--border) !important;
+    transition: all 0.2s ease;
+    margin-right: 4px !important;
+    box-shadow: var(--shadow-sm);
 }
 
-.numInputWrapper span, .numInputWrapper input {
+.flatpickr-monthDropdown-months:hover {
+    background: var(--bg-card) !important; /* Same as current-month but with border */
+    border-color: var(--accent) !important;
+    transform: translateY(-1px);
+    animation: slideDownIn 0.3s ease forwards;
+}
+
+/* Ensure the arrows and dropdowns look like a single premium control unit */
+.flatpickr-current-month {
+    background: transparent !important;
+    padding: 2px 0 !important;
+}
+
+/* Year Input / Wrapper */
+.numInputWrapper {
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    padding: 2px 4px;
+}
+
+.numInputWrapper:hover {
+    background: var(--accent-light);
+}
+
+.numInputWrapper input {
     font-family: var(--font) !important;
     font-weight: 800 !important;
+    color: var(--text-primary) !important;
+    background: transparent !important;
 }
 
+/* Custom Year Arrows - Smaller & Centered */
+.numInputWrapper span {
+    border: none !important;
+    width: 16px !important; /* Smaller width */
+    height: 14px !important; /* Explicit height */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0;
+    transition: all 0.2s ease !important;
+    background: var(--accent) !important;
+    color: white !important;
+    border-radius: 3px !important;
+    padding: 0 !important;
+}
+
+.numInputWrapper:hover span {
+    opacity: 1;
+}
+
+.numInputWrapper span.arrowUp {
+    top: 2px !important;
+}
+
+.numInputWrapper span.arrowDown {
+    bottom: 2px !important;
+}
+
+.numInputWrapper span:after {
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+}
+
+.numInputWrapper span.arrowUp:after {
+    border-bottom-color: white !important;
+    border-left: 3px solid transparent !important;
+    border-right: 3px solid transparent !important;
+    border-bottom: 4px solid white !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+.numInputWrapper span.arrowDown:after {
+    border-top-color: white !important;
+    border-left: 3px solid transparent !important;
+    border-right: 3px solid transparent !important;
+    border-top: 4px solid white !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+.numInputWrapper span:hover {
+    background: var(--accent) !important;
+    filter: brightness(1.2);
+}
+
+/* Nav Arrows Positioning */
+.flatpickr-prev-month, .flatpickr-next-month {
+    top: 14px !important;
+    padding: 8px !important;
+    color: var(--text-secondary) !important;
+}
+
+.flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg {
+    fill: var(--accent) !important;
+}
+
+/* Day Styling adaptation */
 .flatpickr-day {
     border-radius: var(--radius-sm) !important;
+    color: var(--text-primary) !important;
+    transition: all 0.15s ease;
+}
+
+.flatpickr-day.today {
+    border-color: var(--accent) !important;
+}
+
+.flatpickr-day.selected {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: white !important;
+}
+
+.flatpickr-day:hover {
+    background: var(--accent-light) !important;
+    border-color: transparent !important;
+}
+
+.flatpickr-day.flatpickr-disabled, 
+.flatpickr-day.flatpickr-disabled:hover {
+    color: var(--text-muted) !important;
+    background: transparent !important;
+}
+
+.flatpickr-weekday {
+    color: var(--text-muted) !important;
+    font-weight: 600 !important;
+}
+
+/* Time Picker Adaptation */
+.flatpickr-time {
+    border-top: 1px solid var(--border) !important;
+    background: var(--bg-card) !important;
+}
+
+.flatpickr-time input, .flatpickr-time .flatpickr-am-pm {
+    color: var(--text-primary) !important;
+    font-weight: 700 !important;
+}
+
+.flatpickr-time input:hover, .flatpickr-time .flatpickr-am-pm:hover {
+    background: var(--accent-light) !important;
 }
 
 /* ========================

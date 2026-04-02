@@ -298,15 +298,9 @@
             // Handle dark theme specific overrides for elements with hardcoded colors
             document.body.setAttribute('data-theme', themeName);
 
-            // Update Flatpickr theme
-            const fpThemeLink = document.getElementById('flatpickr-theme');
-            if (fpThemeLink) {
-                if (isDark) {
-                    fpThemeLink.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css";
-                } else {
-                    fpThemeLink.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css";
-                }
-            }
+            // Updated: We handle all theme-specific styling via our custom CSS
+            // so we no longer need to swap external Flatpickr stylesheets.
+            document.body.setAttribute('data-theme', themeName);
 
             // Save preference
             localStorage.setItem('cf-theme', themeName);
