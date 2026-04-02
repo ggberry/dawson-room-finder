@@ -682,8 +682,19 @@
                 
                 if (resp.ok) {
                     const data = await resp.json();
-                    document.getElementById('live-count').textContent = data.active_users || 1;
+                    const countEl = document.getElementById('live-count');
+                    const newCount = data.active_users || 1;
+                    const oldCount = parseInt(countEl.textContent) || 0;
+                    
+                    countEl.textContent = newCount;
                     document.getElementById('live-counter').style.display = 'flex';
+                    
+                    // Pop animation when count changes
+                    if (newCount !== oldCount) {
+                        const counter = document.getElementById('live-counter');
+                        counter.style.transform = 'scale(1.15)';
+                        setTimeout(() => { counter.style.transform = 'scale(1)'; }, 200);
+                    }
                 }
             } catch (err) {
                 console.error('Ping failed:', err);
@@ -692,7 +703,7 @@
 
         function initLiveCounter() {
             pingLiveUsers(); // Initial ping
-            setInterval(pingLiveUsers, 15000); // Ping every 15 seconds
+            setInterval(pingLiveUsers, 5000); // Ping every 5 seconds for snappier updates
         }
 
         /* ========================
