@@ -1,5 +1,5 @@
 /* ============================================
-   Dawson Classroom Finder — Clean Light Theme
+   Dawson Classroom Finder — Themed Design
    ============================================ */
 
 :root {
@@ -46,6 +46,7 @@ body {
     color: var(--text-primary);
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    transition: background 0.35s ease, color 0.35s ease;
 }
 
 /* ========================
@@ -65,6 +66,7 @@ body {
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
+    transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
 }
 
 /* ========================
@@ -72,6 +74,11 @@ body {
    ======================== */
 .app-header {
     margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 .logo-section {
@@ -87,21 +94,48 @@ body {
     width: 44px;
     height: 44px;
     border-radius: var(--radius-md);
-    background: var(--accent);
+    background: transparent;
     color: white;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 .app-header h1 {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
+    transition: color 0.35s ease;
 }
 
 .subtitle {
     font-size: 0.8rem;
     color: var(--text-muted);
     margin-top: 1px;
+    transition: color 0.35s ease;
+}
+
+/* ========================
+   Theme Selector
+   ======================== */
+.theme-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
+}
+
+.theme-selector .input-label {
+    font-size: 0.65rem;
+}
+
+.theme-selector .filter-select {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    min-width: 140px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease;
 }
 
 /* ========================
@@ -136,10 +170,11 @@ body {
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    transition: color 0.35s ease;
 }
 
 .input-field {
-    padding: 9px 12px;
+    padding: 10px 14px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--bg-page);
@@ -147,11 +182,13 @@ body {
     font-family: var(--font);
     font-size: 0.88rem;
     outline: none;
-    transition: border-color 0.15s;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
 }
 
 .input-field:focus {
     border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), inset 0 1px 2px rgba(0,0,0,0.02);
 }
 
 select.input-field {
@@ -162,11 +199,16 @@ select.input-field {
 .input-hint {
     font-size: 0.7rem;
     color: var(--text-muted);
+    transition: color 0.35s ease;
 }
 
 .btn-row {
     display: flex;
     gap: 8px;
+    align-items: center;
+    /* Vertically center with the input field, not the label+hint */
+    align-self: center;
+    margin-bottom: 10px;
 }
 
 /* ========================
@@ -194,6 +236,8 @@ select.input-field {
 
 .btn-primary:hover:not(:disabled) {
     opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
 .btn-primary:disabled {
@@ -202,13 +246,16 @@ select.input-field {
 }
 
 .btn-secondary {
-    background: white;
+    background: var(--bg-card);
     color: var(--text-secondary);
     border-color: var(--border);
+    transition: all 0.15s, background 0.35s ease, color 0.35s ease, border-color 0.35s ease;
 }
 
 .btn-secondary:hover {
     background: var(--bg-page);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
 /* ========================
@@ -253,6 +300,7 @@ select.input-field {
     border: 1px solid var(--red-100);
     border-radius: var(--radius-md);
     color: var(--red-600);
+    transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
 }
 
 .error-card p {
@@ -288,6 +336,7 @@ select.input-field {
     gap: 6px;
     color: var(--text-secondary);
     font-size: 0.85rem;
+    transition: color 0.35s ease;
 }
 
 .summary-stats {
@@ -304,6 +353,7 @@ select.input-field {
     font-size: 1.35rem;
     font-weight: 800;
     line-height: 1;
+    transition: color 0.35s ease;
 }
 
 .stat-label {
@@ -314,6 +364,7 @@ select.input-field {
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin-top: 3px;
+    transition: color 0.35s ease;
 }
 
 .stat-empty .stat-number { color: var(--green-600); }
@@ -335,21 +386,66 @@ select.input-field {
     font-weight: 600;
     color: var(--text-muted);
     margin-right: 2px;
+    transition: color 0.35s ease;
 }
 
 .filter-select {
-    padding: 6px 10px;
+    padding: 6px 30px 6px 12px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
-    background: white;
+    background-color: var(--bg-card);
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
     color: var(--text-primary);
     font-family: var(--font);
     font-size: 0.82rem;
     cursor: pointer;
     outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s, background-color 0.35s ease, color 0.35s ease;
 }
 
 .filter-select:focus {
+    border-color: var(--border-focus);
+}
+
+/* Filter Pills */
+.filter-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-pill {
+    cursor: pointer;
+    display: inline-flex;
+}
+
+.filter-pill input {
+    display: none;
+}
+
+.filter-pill span {
+    padding: 4px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.filter-pill input:checked + span {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.filter-pill:hover span {
     border-color: var(--border-focus);
 }
 
@@ -362,6 +458,7 @@ select.input-field {
     border-radius: var(--radius-sm);
     padding: 3px;
     border: 1px solid var(--border);
+    transition: background 0.35s ease, border-color 0.35s ease;
 }
 
 .tab {
@@ -387,7 +484,7 @@ select.input-field {
 }
 
 .tab.active {
-    background: white;
+    background: var(--bg-card);
     color: var(--text-primary);
     box-shadow: var(--shadow-sm);
 }
@@ -396,6 +493,7 @@ select.input-field {
     width: 7px;
     height: 7px;
     border-radius: 50%;
+    transition: background 0.35s ease;
 }
 
 .tab-dot-empty { background: var(--green-600); }
@@ -408,6 +506,7 @@ select.input-field {
     font-weight: 700;
     background: var(--bg-page);
     color: var(--text-muted);
+    transition: background 0.35s ease, color 0.35s ease;
 }
 
 .tab.active .tab-badge {
@@ -430,7 +529,7 @@ select.input-field {
     padding: 14px 10px;
     border-radius: var(--radius-md);
     border: 1px solid var(--border);
-    background: white;
+    background: var(--bg-card);
     transition: all 0.15s;
     animation: cardPop 0.1s ease both;
     cursor: default;
@@ -455,12 +554,12 @@ select.input-field {
 
 /* Empty Room */
 .room-empty {
-    border-color: #bbf7d0;
+    border-color: var(--green-100);
     background: var(--green-50);
 }
 
 .room-empty:hover {
-    border-color: #86efac;
+    border-color: var(--green-600);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
@@ -475,12 +574,12 @@ select.input-field {
 
 /* Occupied Room */
 .room-occupied {
-    border-color: #fecaca;
+    border-color: var(--red-100);
     background: var(--red-50);
 }
 
 .room-occupied:hover {
-    border-color: #fca5a5;
+    border-color: var(--red-600);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
@@ -504,6 +603,7 @@ select.input-field {
     font-size: 0.65rem;
     color: var(--text-muted);
     font-weight: 500;
+    transition: color 0.35s ease;
 }
 
 .no-rooms {
@@ -512,6 +612,7 @@ select.input-field {
     padding: 40px 20px;
     color: var(--text-muted);
     font-size: 0.9rem;
+    transition: color 0.35s ease;
 }
 
 /* ========================
@@ -522,16 +623,19 @@ select.input-field {
     margin-top: 40px;
     padding-top: 20px;
     border-top: 1px solid var(--border);
+    transition: border-color 0.35s ease;
 }
 
 .app-footer p {
     font-size: 0.75rem;
     color: var(--text-muted);
+    transition: color 0.35s ease;
 }
 
 .app-footer a {
     color: var(--accent);
     text-decoration: none;
+    transition: color 0.35s ease;
 }
 
 .app-footer a:hover {
@@ -542,6 +646,15 @@ select.input-field {
    Responsive
    ======================== */
 @media (max-width: 640px) {
+    .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .theme-selector {
+        align-items: flex-start;
+    }
+
     .controls-row {
         flex-direction: column;
         align-items: stretch;
@@ -549,6 +662,8 @@ select.input-field {
 
     .btn-row {
         flex-direction: column;
+        align-self: stretch;
+        margin-bottom: 0;
     }
 
     .btn {
@@ -578,3 +693,55 @@ select.input-field {
         font-size: 0.8rem;
     }
 }
+
+/* ========================
+   Flatpickr Customization
+   ======================== */
+.flatpickr-calendar {
+    font-family: var(--font) !important;
+    border-radius: var(--radius-lg) !important; /* Makes the overall box significantly rounder */
+    box-shadow: var(--shadow-md) !important;
+    overflow: hidden !important; 
+    border: none !important;
+}
+
+.flatpickr-calendar.arrowTop:before, 
+.flatpickr-calendar.arrowTop:after,
+.flatpickr-calendar.arrowBottom:before, 
+.flatpickr-calendar.arrowBottom:after {
+    display: none !important; /* Hides the pointy tooltip arrows */
+}
+
+.flatpickr-months {
+    padding-top: 14px !important;
+    padding-bottom: 6px !important;
+}
+
+.flatpickr-current-month {
+    font-family: var(--font) !important;
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    padding-top: 0 !important;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    font-family: var(--font) !important;
+    font-weight: 800 !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 2px 4px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    outline: none !important;
+}
+
+.numInputWrapper span, .numInputWrapper input {
+    font-family: var(--font) !important;
+    font-weight: 800 !important;
+}
+
+.flatpickr-day {
+    border-radius: var(--radius-sm) !important;
+}
+

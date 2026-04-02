@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Find empty classrooms at Dawson College in real-time.">
     <title>Dawson Classroom Finder</title>
+    <link rel="icon" type="image/png" href="/static/icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" id="flatpickr-theme" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -16,15 +18,22 @@
         <header class="app-header">
             <div class="logo-section">
                 <div class="logo-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                    </svg>
+                    <img src="/static/icon.png" alt="Classroom Finder" style="display: block; width: 100%; height: 100%; object-fit: cover;">
                 </div>
                 <div>
                     <h1 id="app-title">Classroom Finder</h1>
                     <p class="subtitle">Dawson College &mdash; Winter 2026</p>
                 </div>
+            </div>
+            <div class="theme-selector" id="theme-selector">
+                <label for="theme-select" class="input-label">Theme</label>
+                <select id="theme-select" class="filter-select" onchange="changeTheme(this.value)">
+                    <option value="default">Default</option>
+                    <option value="ocean">Ocean Depths</option>
+                    <option value="forest">Forest Canopy</option>
+                    <option value="sunset">Sunset Amber</option>
+                    <option value="midnight">Midnight</option>
+                </select>
             </div>
         </header>
 
@@ -33,17 +42,19 @@
             <div class="controls-row">
                 <div class="control-group grow">
                     <label for="datetime-input" class="input-label">Check at time</label>
-                    <input type="datetime-local" id="datetime-input" class="input-field">
+                    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                        <input type="datetime-local" id="datetime-input" class="input-field" step="900" style="flex: 1; min-width: 200px;">
+                        <div class="btn-row" style="margin: 0;">
+                            <button class="btn btn-primary" id="btn-check" onclick="checkRooms()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                Find Rooms
+                            </button>
+                            <button class="btn btn-secondary" id="btn-now" onclick="checkNow()">
+                                Right Now
+                            </button>
+                        </div>
+                    </div>
                     <span class="input-hint">Leave empty to use current time</span>
-                </div>
-                <div class="btn-row">
-                    <button class="btn btn-primary" id="btn-check" onclick="checkRooms()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        Find Rooms
-                    </button>
-                    <button class="btn btn-secondary" id="btn-now" onclick="checkNow()">
-                        Right Now
-                    </button>
                 </div>
             </div>
         </section>
@@ -85,14 +96,15 @@
             </div>
 
             <!-- Filters -->
-            <div class="filter-bar card">
-                <span class="filter-label">Filter:</span>
-                <select class="filter-select" id="filter-floor" onchange="applyFilters()">
-                    <option value="">All Floors</option>
-                </select>
-                <select class="filter-select" id="filter-wing" onchange="applyFilters()">
-                    <option value="">All Wings</option>
-                </select>
+            <div class="filter-bar card" style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%; align-items: center;" id="filter-floor-container">
+                    <span class="filter-label" style="min-width: 50px;">Floors:</span>
+                    <div id="filter-floor" class="filter-checkboxes"></div>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%; align-items: center;" id="filter-wing-container">
+                    <span class="filter-label" style="min-width: 50px;">Wings:</span>
+                    <div id="filter-wing" class="filter-checkboxes"></div>
+                </div>
             </div>
 
             <!-- Tabs -->
@@ -121,6 +133,158 @@
 
     <script>
         let lastResult = null;
+
+        /* ========================
+           Theme System
+           ======================== */
+        const themes = {
+            default: {}, // uses CSS defaults
+            ocean: {
+                '--bg-page': '#0d1b2a',
+                '--bg-card': '#1b2838',
+                '--bg-card-hover': '#223344',
+                '--border': '#2a3f55',
+                '--border-focus': '#0ea5e9',
+                '--text-primary': '#e2e8f0',
+                '--text-secondary': '#94a3b8',
+                '--text-muted': '#64748b',
+                '--accent': '#0ea5e9',
+                '--accent-light': '#0c2d48',
+                '--green-600': '#22d3ee',
+                '--green-100': '#083344',
+                '--green-50': '#0a2533',
+                '--red-600': '#f472b6',
+                '--red-100': '#3b1a3a',
+                '--red-50': '#2a1229',
+                '--shadow-sm': '0 1px 3px rgba(0,0,0,0.3)',
+                '--shadow-md': '0 2px 8px rgba(0,0,0,0.35)',
+            },
+            forest: {
+                '--bg-page': '#f0f5f0',
+                '--bg-card': '#ffffff',
+                '--bg-card-hover': '#f5faf5',
+                '--border': '#c8dcc8',
+                '--border-focus': '#2d8a4e',
+                '--text-primary': '#1a2e1a',
+                '--text-secondary': '#3d5a3d',
+                '--text-muted': '#6b8a6b',
+                '--accent': '#2d8a4e',
+                '--accent-light': '#e6f4ea',
+                '--green-600': '#1a7a36',
+                '--green-100': '#bbf7d0',
+                '--green-50': '#ecfdf5',
+                '--red-600': '#c2410c',
+                '--red-100': '#fed7aa',
+                '--red-50': '#fff7ed',
+                '--shadow-sm': '0 1px 2px rgba(0,40,0,0.06)',
+                '--shadow-md': '0 2px 6px rgba(0,40,0,0.08)',
+            },
+            sunset: {
+                '--bg-page': '#1a1118',
+                '--bg-card': '#2a1f28',
+                '--bg-card-hover': '#352a33',
+                '--border': '#443540',
+                '--border-focus': '#f59e0b',
+                '--text-primary': '#fde8d0',
+                '--text-secondary': '#c4a882',
+                '--text-muted': '#8a7060',
+                '--accent': '#f59e0b',
+                '--accent-light': '#3d2e10',
+                '--green-600': '#84cc16',
+                '--green-100': '#1a2e0a',
+                '--green-50': '#1a2410',
+                '--red-600': '#f87171',
+                '--red-100': '#450a0a',
+                '--red-50': '#301010',
+                '--shadow-sm': '0 1px 3px rgba(0,0,0,0.3)',
+                '--shadow-md': '0 2px 8px rgba(0,0,0,0.4)',
+            },
+            midnight: {
+                '--bg-page': '#0f0a1a',
+                '--bg-card': '#1a1230',
+                '--bg-card-hover': '#221a40',
+                '--border': '#2d2250',
+                '--border-focus': '#a78bfa',
+                '--text-primary': '#e8e0f8',
+                '--text-secondary': '#a8a0c0',
+                '--text-muted': '#6b6088',
+                '--accent': '#a78bfa',
+                '--accent-light': '#1e1540',
+                '--green-600': '#4ade80',
+                '--green-100': '#0a2a1a',
+                '--green-50': '#0a1f14',
+                '--red-600': '#fb7185',
+                '--red-100': '#3a0a1a',
+                '--red-50': '#2a0a14',
+                '--shadow-sm': '0 1px 3px rgba(0,0,0,0.4)',
+                '--shadow-md': '0 2px 8px rgba(0,0,0,0.5)',
+            },
+        };
+
+        // CSS default values for reset
+        const defaultThemeValues = {
+            '--bg-page': '#f4f5f7',
+            '--bg-card': '#ffffff',
+            '--bg-card-hover': '#fafafa',
+            '--border': '#e2e5ea',
+            '--border-focus': '#6366f1',
+            '--text-primary': '#1a1d23',
+            '--text-secondary': '#4b5563',
+            '--text-muted': '#9ca3af',
+            '--accent': '#4f46e5',
+            '--accent-light': '#eef2ff',
+            '--green-600': '#16a34a',
+            '--green-100': '#dcfce7',
+            '--green-50': '#f0fdf4',
+            '--red-600': '#dc2626',
+            '--red-100': '#fee2e2',
+            '--red-50': '#fef2f2',
+            '--shadow-sm': '0 1px 2px rgba(0,0,0,0.05)',
+            '--shadow-md': '0 1px 6px rgba(0,0,0,0.07)',
+        };
+
+        function changeTheme(themeName) {
+            const root = document.documentElement;
+            const isDark = ['ocean', 'sunset', 'midnight'].includes(themeName);
+
+            // Reset to defaults first
+            Object.entries(defaultThemeValues).forEach(([prop, value]) => {
+                root.style.setProperty(prop, value);
+            });
+
+            // Apply theme overrides
+            const themeVars = themes[themeName];
+            if (themeVars) {
+                Object.entries(themeVars).forEach(([prop, value]) => {
+                    root.style.setProperty(prop, value);
+                });
+            }
+
+            // Handle dark theme specific overrides for elements with hardcoded colors
+            document.body.setAttribute('data-theme', themeName);
+
+            // Update Flatpickr theme
+            const fpThemeLink = document.getElementById('flatpickr-theme');
+            if (fpThemeLink) {
+                if (isDark) {
+                    fpThemeLink.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css";
+                } else {
+                    fpThemeLink.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css";
+                }
+            }
+
+            // Save preference
+            localStorage.setItem('cf-theme', themeName);
+        }
+
+        // Restore saved theme
+        function restoreTheme() {
+            const saved = localStorage.getItem('cf-theme');
+            if (saved && themes[saved] !== undefined) {
+                document.getElementById('theme-select').value = saved;
+                changeTheme(saved);
+            }
+        }
 
         // Parse floor and wing from a room name like "-1H.4" → floor: "-1", wing: "H"
         function parseRoom(name) {
@@ -188,11 +352,22 @@
             const floorSel = document.getElementById('filter-floor');
             const wingSel = document.getElementById('filter-wing');
 
-            floorSel.innerHTML = '<option value="">All Floors</option>' +
-                sortedFloors.map(f => `<option value="${f}">Floor ${f}</option>`).join('');
+            const currentFloorChecked = Array.from(floorSel.querySelectorAll('input:checked')).map(el => el.value);
+            const currentWingChecked = Array.from(wingSel.querySelectorAll('input:checked')).map(el => el.value);
 
-            wingSel.innerHTML = '<option value="">All Wings</option>' +
-                sortedWings.map(w => `<option value="${w}">Wing ${w}</option>`).join('');
+            floorSel.innerHTML = sortedFloors.map(f => `
+                <label class="filter-pill">
+                    <input type="checkbox" value="${f}" onchange="applyFilters()" ${currentFloorChecked.includes(f) ? 'checked' : ''}>
+                    <span>${f}</span>
+                </label>
+            `).join('');
+
+            wingSel.innerHTML = sortedWings.map(w => `
+                <label class="filter-pill">
+                    <input type="checkbox" value="${w}" onchange="applyFilters()" ${currentWingChecked.includes(w) ? 'checked' : ''}>
+                    <span>${w}</span>
+                </label>
+            `).join('');
         }
 
         function applyFilters() {
@@ -201,13 +376,16 @@
         }
 
         function filterRooms(rooms) {
-            const floor = document.getElementById('filter-floor').value;
-            const wing = document.getElementById('filter-wing').value;
+            const floorSel = document.getElementById('filter-floor');
+            const wingSel = document.getElementById('filter-wing');
+            
+            const selectedFloors = Array.from(floorSel.querySelectorAll('input:checked')).map(el => el.value);
+            const selectedWings = Array.from(wingSel.querySelectorAll('input:checked')).map(el => el.value);
 
             return rooms.filter(r => {
                 const parsed = parseRoom(r);
-                if (floor && parsed.floor !== floor) return false;
-                if (wing && parsed.wing !== wing) return false;
+                if (selectedFloors.length > 0 && !selectedFloors.includes(parsed.floor)) return false;
+                if (selectedWings.length > 0 && !selectedWings.includes(parsed.wing)) return false;
                 return true;
             });
         }
@@ -283,7 +461,20 @@
             }
         }
 
-        window.addEventListener('DOMContentLoaded', () => { checkRooms(); });
+        window.addEventListener('DOMContentLoaded', () => {
+            restoreTheme();
+            
+            flatpickr("#datetime-input", {
+                enableTime: true,
+                dateFormat: "Y-m-d\\TH:i",
+                altInput: true,
+                altFormat: "F j, Y h:i K",
+                minuteIncrement: 15
+            });
+
+            checkRooms();
+        });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
 </html>
