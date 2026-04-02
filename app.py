@@ -146,6 +146,10 @@ def is_class_active(course, check_dt):
 def index():
     return render_template('index.html')
 
+@app.route("/ping")
+def ping():
+    return "200 OK"
+
 
 @app.route('/api/check-rooms', methods=['POST'])
 def check_rooms():
@@ -298,5 +302,5 @@ if __name__ == '__main__':
     print("  Dawson Classroom Finder")
     print("=" * 50)
 
-    # app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000)
     # gunicorn app:app --bind 0.0.0.0:$PORT
